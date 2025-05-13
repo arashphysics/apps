@@ -1,0 +1,5 @@
+streamlit
+dataframe_image
+matplotlib
+pillow
+kaleido
