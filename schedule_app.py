@@ -1,23 +1,45 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
+import dataframe_image as dfi
+from PIL import Image
 
-st.title("Lab Schedule Generator")
+st.set_page_config(page_title="Lab Schedule Generator", layout="wide")
+st.title("🔬 Flexible Lab Schedule Generator")
 
-min_gap = st.slider("Minimum gap between experiments (in weeks):", 1, 5, 1)
+# ----------------- Inputs ------------------
+st.subheader("📥 Input Parameters")
 
+students_input = st.text_area(
+    "Enter student names (one per line):",
+    "Student1\nStudent2\nStudent3"
+)
+
+dates_input = st.text_area(
+    "Enter experiment dates (one per line):",
+    "May 21\nMay 28\nJune 4\nJune 11\nJune 18\nJune 25\nJuly 9\nJuly 16\nJuly 23"
+)
+
+weeks_input = st.text_input(
+    "Enter week numbers (comma separated):",
+    "1,2,3,4,5,6,7,8,9"
+)
+
+expt_input = st.text_area(
+    "Enter experiment names (one per line):",
+    "expt 32\nexpt 33\nexpt 34"
+)
+
+min_gap = st.slider("Minimum spacing (gap in weeks) between experiments for each student:", 1, 5, 1)
+
+# Process inputs
+names = [name.strip() for name in students_input.strip().split("\n") if name.strip()]
+dates = [d.strip() for d in dates_input.strip().split("\n") if d.strip()]
+week = [int(w.strip()) for w in weeks_input.strip().split(",") if w.strip()]
+expt = [e.strip() for e in expt_input.strip().split("\n") if e.strip()]
+
+# ----------------- Run Generator ------------------
 if st.button("Generate Schedule"):
-
-    names = [
-        "Sam Bennett", "Tyler Bird", "Charles Capiato", "Gabe Cunningham", "Myles Drew",
-        "Polina Erofeeva", "Lauren Hall", "Cameron Johnson", "Marshall Hurlbut",
-        "Jack Laidlaw", "Karen Magureanu", "Cason Martz", "Sedona Reed", "Paul Reid",
-        "Joanna Leith", "Lukas Speier", "Colby Stewart", "Grace Tomasi"
-    ]
-
-    week = list(range(1, 10))
-    dates = ['May 21', 'May 28', 'June 4', 'June 11', 'June 18', 'June 25', 'July 9', 'July 16', 'July 23']
-    expt = ['expt 32', 'expt 33', 'expt 34']
 
     max_retries = 1000
     success = False
@@ -34,6 +56,7 @@ if st.button("Generate Schedule"):
             sorted_inds = np.argsort(avai_week)
             avai_expt = avai_expt[sorted_inds]
             avai_week = avai_week[sorted_inds]
+
             week_temp = np.full(len(expt), np.nan)
             week_index = 0
             retry_count = 0
@@ -66,7 +89,8 @@ if st.button("Generate Schedule"):
                 assigned_expt[exp_need] = 1
                 week_index += 1
 
-                students_sch.loc[student, expt[exp_need]] = f"Week {wk + 1}, {dates[wk]}"
+                date_label = dates[wk] if wk < len(dates) else f"Week {wk+1}"
+                students_sch.loc[student, expt[exp_need]] = f"Week {wk + 1}, {date_label}"
                 sch_arr[exp_need, wk] += 1
 
                 if pd.isna(schedule.iloc[exp_need, wk]):
@@ -80,14 +104,29 @@ if st.button("Generate Schedule"):
         if success:
             break
 
+    # ----------------- Display Output ------------------
     if success:
         st.success(f"✅ Schedule completed after {attempt + 1} attempt(s).")
-        schedule.columns = [f"Week {i + 1}, {dates[i]}" for i in range(len(dates))]
+        col_labels = [f"Week {i + 1}, {dates[i]}" if i < len(dates) else f"Week {i + 1}" for i in range(len(week))]
+        schedule.columns = col_labels
 
-        st.subheader("📅 Full Schedule (by Experiment)")
-        st.dataframe(schedule.transpose())
+        # Save and show images
+        schedule_img_path = "full_schedule.png"
+        students_img_path = "students_schedule.png"
 
-        st.subheader("👨‍🎓 Student Schedule (by Name)")
-        st.dataframe(students_sch)
+        try:
+            dfi.export(schedule.transpose(), schedule_img_path, dpi=300, table_conversion='matplotlib')
+            dfi.export(students_sch, students_img_path, dpi=300, table_conversion='matplotlib')
+
+
+            st.subheader("🖼️ Full Schedule (by Experiment)")
+            st.image(Image.open(schedule_img_path), caption="Full Schedule by Experiment", use_column_width=True)
+
+            st.subheader("🖼️ Student Schedule (by Name)")
+            st.image(Image.open(students_img_path), caption="Student Schedule by Name", use_column_width=True)
+
+        except Exception as e:
+            st.error(f"❌ Error while generating schedule images: {e}")
+
     else:
         st.error("❌ Failed to generate a valid schedule after 1000 attempts.")
