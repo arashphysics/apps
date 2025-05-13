@@ -115,8 +115,8 @@ if st.button("Generate Schedule"):
         students_img_path = "students_schedule.png"
 
         try:
-            dfi.export(schedule.transpose(), schedule_img_path, dpi=300, table_conversion='matplotlib')
-            dfi.export(students_sch, students_img_path, dpi=300, table_conversion='matplotlib')
+            dfi.export(schedule.transpose(), schedule_img_path, dpi=600, table_conversion='matplotlib')
+            dfi.export(students_sch, students_img_path, dpi=600, table_conversion='matplotlib')
 
 
             st.subheader("🖼️ Full Schedule (by Experiment)")
