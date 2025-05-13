@@ -5,7 +5,7 @@ import dataframe_image as dfi
 from PIL import Image
 
 st.set_page_config(page_title="Lab Schedule Generator", layout="wide")
-st.title("🔬 Flexible Lab Schedule Generator")
+st.title("🔬 Lab Schedule Generator by Arash AZ")
 
 # ----------------- Inputs ------------------
 st.subheader("📥 Input Parameters")
